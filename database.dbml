@@ -1,23 +1,23 @@
 Table users {
-  id integer [primary key]
+  id integer [primary key, increment]
   username varchar
   created_at timestamp
 }
 
 Table carts {
-  id integer [primary key]
+  id integer [primary key, increment]
   user_id integer
   name varchar
 }
 
 Table items {
-  id integer [primary key]
-  price integer
+  id integer [primary key, increment]
+  price float
   name varchar
 }
 
 Table item_in_cart {
-  id integer [primary key]
+  id integer [primary key, increment]
   cart_id integer
   item_id integer
   amount integer
