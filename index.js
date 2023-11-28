@@ -33,7 +33,7 @@ app.post('/items', async (req, res) => {
 });
 
 //edit item by id with name, price
-app.put('/items/id', async (req, res) => {
+app.put('/items/:id', async (req, res) => {
     const { id } = req.params;
     let parsedId = parseInt(id);
     if (isNaN(parsedId)) {
@@ -41,13 +41,13 @@ app.put('/items/id', async (req, res) => {
         return
     }
     const { name, price } = req.body;
-    const UpdateItemQueryString = `UPDATE items set name = '${name}', price = ${price} WHERE id = ${id}`;
     try {
         let result = await db.query(`SELECT * FROM items WHERE id = ${id}`);
         if (result.rows.length === 0) {
             res.status(404).send('Item not found');
             return
         }
+        const UpdateItemQueryString = `UPDATE items set name = '${name}', price = ${price} WHERE id = ${id}`;
         await db.query(UpdateItemQueryString);
         res.send("Update done.");
     } catch (err) {
@@ -57,7 +57,7 @@ app.put('/items/id', async (req, res) => {
 });
 
 //delete item by id
-app.delete('/items/id', async (req, res) => {
+app.delete('/items/:id', async (req, res) => {
     const { id } = req.params;
     let parsedId = parseInt(id);
     if (isNaN(parsedId)) {
@@ -101,7 +101,7 @@ app.post('/users', async (req, res) => {
 });
 
 //edit user by id with username
-app.put('/users/id', async (req, res) => {
+app.put('/users/:id', async (req, res) => {
     const { id } = req.params;
     let parsedId = parseInt(id);
     if (isNaN(parsedId)) {
@@ -125,7 +125,7 @@ app.put('/users/id', async (req, res) => {
 });
 
 //delete user by id
-app.delete('/users/id', async (req, res) => {
+app.delete('/users/:id', async (req, res) => {
     const { id } = req.params;
     let parsedId = parseInt(id);
     if (isNaN(parsedId)) {
@@ -155,30 +155,52 @@ app.get('/carts', async (req, res) => {
     }
 });
 
-//add new cart with name
+//add new cart with name and userid
 app.post('/carts', async (req, res) => {
-    const { name } = req.body;
-    const addCartQueryString = `INSERT INTO carts(name) values('${name}');`;
+    const { name, userid } = req.body;
+    const addCartQueryString = `INSERT INTO carts(name, user_id) values('${name}', ${userid});`;
+    let result = await db.query(`SELECT * FROM users WHERE id = ${userid}`);
+    if (result.rows.length === 0) {
+        res.status(404).send('User not found');
+        return
+    }
     try {
         await db.query(addCartQueryString);
-        res.send(`Added cart with name ${name}`);
+        res.send(`Added cart with name ${name} for user with id ${userid}`);
     } catch (err) {
         console.error(err)
         res.status(500).send('Internal Server Error')
     }
 });
 
-//delete cart by userid
-app.delete('/carts/id', async (req, res) => {
-    const { id } = req.params;
-    let parsedId = parseInt(id);
+//delete all carts by userid
+app.delete('/carts/user/:userid', async (req, res) => {
+    const { userid } = req.params;
+    let parsedId = parseInt(userid);
     if (isNaN(parsedId)) {
         res.status(400).send('Invalid ID supplied');
         return
     }
     try {
-        await db.query(`DELETE FROM carts WHERE user_id = ${id}`);
-        res.send(`Deleted cart from user with id ${id}.`);
+        await db.query(`DELETE FROM carts WHERE user_id = ${userid}`);
+        res.send(`Deleted all carts from user with id ${userid}.`);
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Internal Server Error');
+    }
+});
+
+//delete cart by ID
+app.delete('/carts/:cartid', async (req, res) => {
+    const { cartid } = req.params;
+    let parsedId = parseInt(cartid);
+    if (isNaN(parsedId)) {
+        res.status(400).send('Invalid ID supplied');
+        return
+    }
+    try {
+        await db.query(`DELETE FROM carts WHERE id = ${cartid}`);
+        res.send(`Deleted cart with id ${cartid}.`);
     } catch (err) {
         console.error(err);
         res.status(500).send('Internal Server Error');
@@ -186,18 +208,61 @@ app.delete('/carts/id', async (req, res) => {
 });
 
 //CRUD functionalities for item_in_cart
-// /!\ /!\ add item to cart with cart_id, item_id /!\ /!\
+// get cart content by cart_id
+app.get('/shopping/:cartid', async (req, res) => {
+    const { cartid } = req.params;
+    let parsedId = parseInt(cartid);
+    if (isNaN(parsedId)) {
+        res.status(400).send('Invalid ID supplied');
+        return
+    }
+    const getCartContentQueryString = `SELECT * FROM item_in_cart WHERE cart_id = ${cartid}`;
+    try {
+        const result = await db.query(getCartContentQueryString);
+        res.json(result.rows);
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Internal Server Error');
+    }
+});
+
+// add item to cart with cart_id, item_id, amount
 app.post('/shopping', async (req, res) => {
-
+    const { cartid, itemid, amount } = req.body;
+    const addCartQueryString = `INSERT INTO item_in_cart(cart_id, item_id, amount) values(${cartid}, ${itemid}, ${amount});`;
+    try {
+        await db.query(addCartQueryString);
+        res.send(`Added ${amount} of item with id ${itemid} into cart with id ${cartid}`);
+    } catch (err) {
+        console.error(err)
+        res.status(500).send('Internal Server Error')
+    }
 });
 
-// /!\ /!\ delete item from cart by item_id with cart_id /!\ /!\
-app.delete('/carts/itemid', async (req, res) => {
-
+// delete item from cart by item_id and cart_id
+app.delete('/shopping', async (req, res) => {
+    const { itemid, cartid } = req.body;
+    let parseditemId = parseInt(itemid);
+    if (isNaN(parseditemId)) {
+        res.status(400).send('Invalid item ID supplied');
+        return
+    }
+    let parsedcartId = parseInt(cartid);
+    if (isNaN(parsedcartId)) {
+        res.status(400).send('Invalid cart ID supplied');
+        return
+    }
+    try {
+        await db.query(`DELETE FROM item_in_cart WHERE cart_id = ${cartid} AND item_id = ${itemid}`);
+        res.send(`Removed item with id ${itemid} from cart with id ${cartid}.`);
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Internal Server Error');
+    }
 });
-
+//-----------------------------------------------------------
 //clear all items in cart by cart_id (in item_in_cart table)
-app.delete('/carts/cartid', async (req, res) => {
+app.delete('/carts/:cartid', async (req, res) => {
     const { id } = req.params;
     let parsedId = parseInt(id);
     if (isNaN(parsedId)) {
