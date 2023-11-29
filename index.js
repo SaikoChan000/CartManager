@@ -260,18 +260,19 @@ app.delete('/shopping', async (req, res) => {
         res.status(500).send('Internal Server Error');
     }
 });
-//-----------------------------------------------------------
+
 //clear all items in cart by cart_id (in item_in_cart table)
-app.delete('/carts/:cartid', async (req, res) => {
-    const { id } = req.params;
-    let parsedId = parseInt(id);
+app.delete('/shopping/clear/:cartid', async (req, res) => {
+    console.log("Clearing request!")
+    const { cartid } = req.params;
+    let parsedId = parseInt(cartid);
     if (isNaN(parsedId)) {
         res.status(400).send('Invalid ID supplied');
         return
     }
     try {
-        await db.query(`DELETE FROM item_in_cart WHERE cart_id = ${id}`);
-        res.send(`Emptied cart with id ${id}.`);
+        await db.query(`DELETE FROM item_in_cart WHERE cart_id = ${cartid}`);
+        res.send(`Emptied cart with id ${cartid}.`);
     } catch (err) {
         console.error(err);
         res.status(500).send('Internal Server Error');
