@@ -32,6 +32,28 @@ app.post('/items', async (req, res) => {
     }
 });
 
+// get item by id
+app.get('/items/:id', async (req, res) => {
+    const { id } = req.params;
+    let parsedId = parseInt(id);
+    if (isNaN(parsedId)) {
+        res.status(400).send('Invalid ID supplied');
+        return
+    }
+    const getItemQueryString = `SELECT * FROM items WHERE id = ${id}`;
+    try {
+        const result = await db.query(getItemQueryString);
+        if (result.rows.length === 0) {
+            res.status(404).send('Item not found');
+            return
+        }
+        res.json(result.rows);
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Internal Server Error');
+    }
+});
+
 //edit item by id with name, price
 app.put('/items/:id', async (req, res) => {
     const { id } = req.params;
@@ -65,6 +87,11 @@ app.delete('/items/:id', async (req, res) => {
         return
     }
     try {
+        let result = await db.query(`SELECT * FROM items WHERE id = ${id}`);
+        if (result.rows.length === 0) {
+            res.status(404).send('Item not found');
+            return
+        }
         await db.query(`DELETE FROM items WHERE id = ${id}`);
         res.send(`Deleted item with id ${id}.`);
     } catch (err) {
@@ -97,6 +124,28 @@ app.post('/users', async (req, res) => {
     } catch (err) {
         console.error(err)
         res.status(500).send('Internal Server Error')
+    }
+});
+
+// get user by id
+app.get('/users/:id', async (req, res) => {
+    const { id } = req.params;
+    let parsedId = parseInt(id);
+    if (isNaN(parsedId)) {
+        res.status(400).send('Invalid ID supplied');
+        return
+    }
+    const getUserQueryString = `SELECT * FROM users WHERE id = ${id}`;
+    try {
+        const result = await db.query(getUserQueryString);
+        if (result.rows.length === 0) {
+            res.status(404).send('User not found');
+            return
+        }
+        res.json(result.rows);
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Internal Server Error');
     }
 });
 
@@ -133,6 +182,11 @@ app.delete('/users/:id', async (req, res) => {
         return
     }
     try {
+        let result = await db.query(`SELECT * FROM users WHERE id = ${id}`);
+        if (result.rows.length === 0) {
+            res.status(404).send('User not found');
+            return
+        }
         await db.query(`DELETE FROM users WHERE id = ${id}`);
         res.send(`Deleted user with id ${id}.`);
     } catch (err) {
@@ -159,6 +213,11 @@ app.get('/carts', async (req, res) => {
 app.post('/carts', async (req, res) => {
     const { name, userid } = req.body;
     const addCartQueryString = `INSERT INTO carts(name, user_id) values('${name}', ${userid});`;
+    let parsedId = parseInt(userid);
+    if (isNaN(parsedId)) {
+        res.status(400).send('Invalid ID supplied');
+        return
+    }
     let result = await db.query(`SELECT * FROM users WHERE id = ${userid}`);
     if (result.rows.length === 0) {
         res.status(404).send('User not found');
@@ -181,6 +240,11 @@ app.delete('/carts/user/:userid', async (req, res) => {
         res.status(400).send('Invalid ID supplied');
         return
     }
+    let result = await db.query(`SELECT * FROM users WHERE id = ${userid}`);
+    if (result.rows.length === 0) {
+        res.status(404).send('User not found');
+        return
+    }
     try {
         await db.query(`DELETE FROM carts WHERE user_id = ${userid}`);
         res.send(`Deleted all carts from user with id ${userid}.`);
@@ -198,6 +262,11 @@ app.delete('/carts/:cartid', async (req, res) => {
         res.status(400).send('Invalid ID supplied');
         return
     }
+    let result = await db.query(`SELECT * FROM carts WHERE id = ${cartid}`);
+    if (result.rows.length === 0) {
+        res.status(404).send('Cart not found');
+        return
+    }
     try {
         await db.query(`DELETE FROM carts WHERE id = ${cartid}`);
         res.send(`Deleted cart with id ${cartid}.`);
@@ -208,12 +277,77 @@ app.delete('/carts/:cartid', async (req, res) => {
 });
 
 //CRUD functionalities for item_in_cart
+// add item to cart with cart_id, item_id, amount
+app.post('/shopping', async (req, res) => {
+    const { cartid, itemid, amount } = req.body;
+    let parsedCartId = parseInt(cartid);
+    if (isNaN(parsedCartId)) {
+        res.status(400).send('Invalid cart ID supplied');
+        return
+    }
+    let parsedItemId = parseInt(cartid);
+    if (isNaN(parsedItemId)) {
+        res.status(400).send('Invalid item ID supplied');
+        return
+    }
+    let cartresult = await db.query(`SELECT * FROM carts WHERE id = ${cartid}`);
+    if (cartresult.rows.length === 0) {
+        res.status(404).send('Cart not found');
+        return
+    }
+    let itemresult = await db.query(`SELECT * FROM items WHERE id = ${itemid}`);
+    if (itemresult.rows.length === 0) {
+        res.status(404).send('Item not found');
+        return
+    }
+    const addCartQueryString = `INSERT INTO item_in_cart(cart_id, item_id, amount) values(${cartid}, ${itemid}, ${amount});`;
+    try {
+        await db.query(addCartQueryString);
+        res.send(`Added ${amount} of item with id ${itemid} into cart with id ${cartid}`);
+    } catch (err) {
+        console.error(err)
+        res.status(500).send('Internal Server Error')
+    }
+});
+
+// delete item from cart by item_id and cart_id
+app.put('/shopping', async (req, res) => {
+    const { itemid, cartid } = req.body;
+    let parseditemId = parseInt(itemid);
+    if (isNaN(parseditemId)) {
+        res.status(400).send('Invalid item ID supplied');
+        return
+    }
+    let parsedcartId = parseInt(cartid);
+    if (isNaN(parsedcartId)) {
+        res.status(400).send('Invalid cart ID supplied');
+        return
+    }
+    let result = await db.query(`SELECT * FROM item_in_cart WHERE cart_id = ${cartid} AND item_id = ${itemid}`);
+    if (result.rows.length === 0) {
+        res.status(404).send('Entry not found');
+        return
+    }
+    try {
+        await db.query(`DELETE FROM item_in_cart WHERE cart_id = ${cartid} AND item_id = ${itemid}`);
+        res.send(`Removed item with id ${itemid} from cart with id ${cartid}.`);
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Internal Server Error');
+    }
+});
+
 // get cart content by cart_id
 app.get('/shopping/:cartid', async (req, res) => {
     const { cartid } = req.params;
     let parsedId = parseInt(cartid);
     if (isNaN(parsedId)) {
         res.status(400).send('Invalid ID supplied');
+        return
+    }
+    let result = await db.query(`SELECT * FROM carts WHERE id = ${cartid}`);
+    if (result.rows.length === 0) {
+        res.status(404).send('Cart not found');
         return
     }
     const getCartContentQueryString = `SELECT * FROM item_in_cart WHERE cart_id = ${cartid}`;
@@ -226,48 +360,17 @@ app.get('/shopping/:cartid', async (req, res) => {
     }
 });
 
-// add item to cart with cart_id, item_id, amount
-app.post('/shopping', async (req, res) => {
-    const { cartid, itemid, amount } = req.body;
-    const addCartQueryString = `INSERT INTO item_in_cart(cart_id, item_id, amount) values(${cartid}, ${itemid}, ${amount});`;
-    try {
-        await db.query(addCartQueryString);
-        res.send(`Added ${amount} of item with id ${itemid} into cart with id ${cartid}`);
-    } catch (err) {
-        console.error(err)
-        res.status(500).send('Internal Server Error')
-    }
-});
-
-// delete item from cart by item_id and cart_id
-app.delete('/shopping', async (req, res) => {
-    const { itemid, cartid } = req.body;
-    let parseditemId = parseInt(itemid);
-    if (isNaN(parseditemId)) {
-        res.status(400).send('Invalid item ID supplied');
-        return
-    }
-    let parsedcartId = parseInt(cartid);
-    if (isNaN(parsedcartId)) {
-        res.status(400).send('Invalid cart ID supplied');
-        return
-    }
-    try {
-        await db.query(`DELETE FROM item_in_cart WHERE cart_id = ${cartid} AND item_id = ${itemid}`);
-        res.send(`Removed item with id ${itemid} from cart with id ${cartid}.`);
-    } catch (err) {
-        console.error(err);
-        res.status(500).send('Internal Server Error');
-    }
-});
-
 //clear all items in cart by cart_id (in item_in_cart table)
 app.delete('/shopping/clear/:cartid', async (req, res) => {
-    console.log("Clearing request!")
     const { cartid } = req.params;
     let parsedId = parseInt(cartid);
     if (isNaN(parsedId)) {
         res.status(400).send('Invalid ID supplied');
+        return
+    }
+    let result = await db.query(`SELECT * FROM carts WHERE id = ${cartid}`);
+    if (result.rows.length === 0) {
+        res.status(404).send('Cart not found');
         return
     }
     try {
