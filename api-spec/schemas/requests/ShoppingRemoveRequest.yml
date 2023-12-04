@@ -1,0 +1,13 @@
+type: object
+properties:
+  cart_id:
+    type: integer
+    format: int64
+    example: 1
+  item_id:
+    type: integer
+    format: int64
+    example: 2
+required:
+  - cart_id
+  - item_id

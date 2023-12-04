@@ -1,0 +1,17 @@
+type: object
+properties:
+  id:
+    type: integer
+    format: int64
+    example: 1
+  name:
+    type: string
+    example: Apple
+  price:
+    type: number
+    format: float32
+    example: 0.5
+required:
+  - id
+  - name
+  - price
