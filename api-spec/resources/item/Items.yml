@@ -30,8 +30,8 @@ post:
         schema: 
           $ref: '../../schemas/_index.yml#/ItemPostUpdateRequest'
   responses:
-    '200':
-      description: successful operation
+    '201':
+      description: created item
     '400':
       description: bad request
  

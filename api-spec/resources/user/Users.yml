@@ -31,7 +31,7 @@ post:
           $ref: '../../schemas/_index.yml#/UserPostUpdateRequest'
   responses:
     '200':
-      description: successful operation
+      description: created user
     '400':
       description: bad request
  

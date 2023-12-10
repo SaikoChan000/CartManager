@@ -30,8 +30,8 @@ post:
         schema: 
           $ref: '../../schemas/_index.yml#/CartPostRequest'
   responses:
-    '200':
-      description: successful operation
+    '201':
+      description: created cart
     '404':
       description: User not found
  

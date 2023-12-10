@@ -10,8 +10,8 @@ post:
         schema: 
           $ref: '../../schemas/_index.yml#/ShoppingPostRequest'
   responses:
-    '200':
-      description: successful operation
+    '201':
+      description: created cart entry
     '400':
       description: Invalid ID supplied
     '404':
