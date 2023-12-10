@@ -25,6 +25,7 @@ CREATE TABLE "item_in_cart" (
   "cart_id" integer,
   "item_id" integer,
   "amount" integer
+  "created_at" timestamp DEFAULT (now())
 );
 
 ALTER TABLE "carts" ADD FOREIGN KEY ("user_id") REFERENCES "users" ("id");

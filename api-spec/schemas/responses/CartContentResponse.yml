@@ -16,8 +16,13 @@ properties:
     type: integer
     format: int64
     example: 4
+  created_at:
+    type: string
+    format: RFC3339
+    example: 2019-10-12T07:20:50.52Z
 required:
   - id
   - cart_id
   - item_id
   - amount
+  - created_at

@@ -1,0 +1,39 @@
+get:
+  summary: Show all carts
+  operationId: showAllCarts
+  tags:
+    - cart
+  responses:
+    '200':
+      description: successful operation
+      content:
+        application/json:
+          schema:
+            type: array
+            items: 
+              $ref: '../../schemas/_index.yml#/CartResponse'
+    '404':
+      description: No carts found
+ 
+  # This API has no security
+  security: []
+
+post:
+  summary: Add new cart
+  operationId: addNewCart
+  tags:
+    - cart
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema: 
+          $ref: '../../schemas/_index.yml#/CartPostRequest'
+  responses:
+    '200':
+      description: successful operation
+    '404':
+      description: User not found
+ 
+  # This API has no security
+  security: []

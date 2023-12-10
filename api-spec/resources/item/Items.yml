@@ -1,0 +1,39 @@
+get:
+  summary: List all items
+  operationId: getAllItems
+  tags:
+    - item
+  responses:
+    '200':
+      description: successful operation
+      content:
+        application/json:
+          schema:
+            type: array
+            items: 
+              $ref: '../../schemas/_index.yml#/ItemResponse'
+    '404':
+      description: no items found
+ 
+  # This API has no security
+  security: []
+
+post:
+  summary: Add new item
+  operationId: addNewItem
+  tags:
+    - item
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema: 
+          $ref: '../../schemas/_index.yml#/ItemPostUpdateRequest'
+  responses:
+    '200':
+      description: successful operation
+    '400':
+      description: bad request
+ 
+  # This API has no security
+  security: []
