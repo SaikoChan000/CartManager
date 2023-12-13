@@ -18,13 +18,3 @@
 
 /carts/{cartId}:
   $ref: './cart/CartById.yml'
-
-/shopping:
-  $ref: './shopping/Shopping.yml'
-
-/shopping/{cartId}:
-  $ref: './shopping/CartContentByCartId.yml'
-
-/shopping/clear/{cartId}:
-  $ref: './shopping/ClearOutCartByCartId.yml'
-

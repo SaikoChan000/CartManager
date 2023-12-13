@@ -14,16 +14,16 @@ UserResponse:
 # Requests
 CartPostRequest:
   $ref: './requests/CartPostRequest.yml'
+
+CartsPostRequest:
+  $ref: './requests/CartsPostRequest.yml'
   
 ItemPostUpdateRequest:
   $ref: './requests/ItemPostUpdateRequest.yml'
 
-ShoppingPostRequest:
-  $ref: './requests/ShoppingPostRequest.yml'
-
-ShoppingRemoveRequest:
-  $ref: './requests/ShoppingRemoveRequest.yml'
-
 UserPostUpdateRequest:
   $ref: './requests/UserPostUpdateRequest.yml'
-  
+
+# Types
+Actions:
+  $ref: './types/actions.yml'

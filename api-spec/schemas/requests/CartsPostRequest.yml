@@ -1,13 +1,14 @@
 type: object
 properties:
-  cart_id:
+  action:
+    $ref: '../../schemas/_index.yml#/Actions'
+  itemid:
     type: integer
     format: int64
-    example: 1
-  item_id:
+    example: 2
+  amount:
     type: integer
     format: int64
     example: 2
 required:
-  - cart_id
-  - item_id
+  - action
