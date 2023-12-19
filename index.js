@@ -13,9 +13,11 @@ app.get('/items', async (req, res) => {
     try {
         const result = await db.query(allItemsQueryString);
         res.json(result.rows);
+        return
     } catch (err) {
         console.error(err);
         res.status(500).send('Internal Server Error');
+        return
     }
 });
 
@@ -26,9 +28,11 @@ app.post('/items', async (req, res) => {
     try {
         await db.query(addItemQueryString);
         res.send(`Added item named ${name} with price ${price}`)
+        return
     } catch (err) {
         console.error(err)
-        res.status(500).send('Internal Server Error')
+        res.status(500).send('Internal Server Error');
+        return
     }
 });
 
@@ -48,9 +52,11 @@ app.get('/items/:id', async (req, res) => {
             return
         }
         res.json(result.rows);
+        return
     } catch (err) {
         console.error(err);
         res.status(500).send('Internal Server Error');
+        return
     }
 });
 
@@ -72,9 +78,11 @@ app.put('/items/:id', async (req, res) => {
         const UpdateItemQueryString = `UPDATE items set name = '${name}', price = ${price} WHERE id = ${id}`;
         await db.query(UpdateItemQueryString);
         res.send("Update done.");
+        return
     } catch (err) {
         console.error(err);
         res.status(500).send('Internal Server Error');
+        return
     }
 });
 
@@ -94,9 +102,11 @@ app.delete('/items/:id', async (req, res) => {
         }
         await db.query(`DELETE FROM items WHERE id = ${id}`);
         res.send(`Deleted item with id ${id}.`);
+        return
     } catch (err) {
         console.error(err);
         res.status(500).send('Internal Server Error');
+        return
     }
 });
 
@@ -108,9 +118,11 @@ app.get('/users', async (req, res) => {
     try {
         const result = await db.query(allUsersQueryString);
         res.json(result.rows);
+        return
     } catch (err) {
         console.error(err);
         res.status(500).send('Internal Server Error');
+        return
     }
 });
 
@@ -121,9 +133,11 @@ app.post('/users', async (req, res) => {
     try {
         await db.query(addUserQueryString);
         res.send(`Added user ${username}`);
+        return
     } catch (err) {
         console.error(err)
-        res.status(500).send('Internal Server Error')
+        res.status(500).send('Internal Server Error');
+        return
     }
 });
 
@@ -143,9 +157,11 @@ app.get('/users/:id', async (req, res) => {
             return
         }
         res.json(result.rows);
+        return
     } catch (err) {
         console.error(err);
         res.status(500).send('Internal Server Error');
+        return
     }
 });
 
@@ -167,9 +183,11 @@ app.put('/users/:id', async (req, res) => {
         }
         await db.query(UpdateItemQueryString);
         res.send("Update done.");
+        return
     } catch (err) {
         console.error(err);
         res.status(500).send('Internal Server Error');
+        return
     }
 });
 
@@ -189,9 +207,11 @@ app.delete('/users/:id', async (req, res) => {
         }
         await db.query(`DELETE FROM users WHERE id = ${id}`);
         res.send(`Deleted user with id ${id}.`);
+        return
     } catch (err) {
         console.error(err);
         res.status(500).send('Internal Server Error');
+        return
     }
 });
 
@@ -203,9 +223,11 @@ app.get('/carts', async (req, res) => {
     try {
         const result = await db.query(allCartsQueryString);
         res.json(result.rows);
+        return
     } catch (err) {
         console.error(err);
         res.status(500).send('Internal Server Error');
+        return
     }
 });
 
@@ -226,9 +248,11 @@ app.post('/carts', async (req, res) => {
     try {
         await db.query(addCartQueryString);
         res.send(`Added cart with name ${name} for user with id ${userid}`);
+        return
     } catch (err) {
         console.error(err)
         res.status(500).send('Internal Server Error')
+        return
     }
 });
 
@@ -248,13 +272,15 @@ app.delete('/carts/user/:userid', async (req, res) => {
     try {
         await db.query(`DELETE FROM carts WHERE user_id = ${userid}`);
         res.send(`Deleted all carts from user with id ${userid}.`);
+        return
     } catch (err) {
         console.error(err);
         res.status(500).send('Internal Server Error');
+        return
     }
 });
 //get cart by ID
-app.get('/carts/:cartsid', async (req, res) => {
+app.get('/carts/:cartid', async (req, res) => {
     const { cartid } = req.params;
     let parsedId = parseInt(cartid);
     if (isNaN(parsedId)) {
@@ -270,9 +296,11 @@ app.get('/carts/:cartsid', async (req, res) => {
     try {
         const result = await db.query(getCartContentQueryString);
         res.json(result.rows);
+        return
     } catch (err) {
         console.error(err);
         res.status(500).send('Internal Server Error');
+        return
     }
 });
 
@@ -292,15 +320,18 @@ app.delete('/carts/:cartid', async (req, res) => {
     try {
         await db.query(`DELETE FROM carts WHERE id = ${cartid}`);
         res.send(`Deleted cart with id ${cartid}.`);
+        return
     } catch (err) {
         console.error(err);
         res.status(500).send('Internal Server Error');
+        return
     }
 });
 
 //Add or remove item or clear cart with action enums
-app.post('/carts/:cartsid', async (req, res) => {
-    const { action, cartid, itemid, amount } = req.body;
+app.post('/carts/:cartid', async (req, res) => {
+    const { cartid } = req.params;
+    const { action, itemid, amount } = req.body;
     //functionalities depending on actionEnum:
     if (action === "add"){
         let parsedCartId = parseInt(cartid);
@@ -327,9 +358,11 @@ app.post('/carts/:cartsid', async (req, res) => {
         try {
             await db.query(addCartQueryString);
             res.send(`Added ${amount} of item with id ${itemid} into cart with id ${cartid}`);
+            return
         } catch (err) {
             console.error(err)
             res.status(500).send('Internal Server Error')
+            return
         }
     };
     if (action === "remove"){
@@ -351,9 +384,11 @@ app.post('/carts/:cartsid', async (req, res) => {
         try {
             await db.query(`DELETE FROM item_in_cart WHERE cart_id = ${cartid} AND item_id = ${itemid}`);
             res.send(`Removed item with id ${itemid} from cart with id ${cartid}.`);
+            return
         } catch (err) {
             console.error(err);
             res.status(500).send('Internal Server Error');
+            return
         }
     };
     if (action === "clear"){
@@ -370,11 +405,15 @@ app.post('/carts/:cartsid', async (req, res) => {
         try {
             await db.query(`DELETE FROM item_in_cart WHERE cart_id = ${cartid}`);
             res.send(`Emptied cart with id ${cartid}.`);
+            return
         } catch (err) {
             console.error(err);
             res.status(500).send('Internal Server Error');
+            return
         }
     };
+    res.status(400).send('Invalid action supplied');
+    return
 });
 
 app.listen(3000, () => {
