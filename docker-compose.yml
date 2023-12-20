@@ -9,7 +9,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
       PGDATA: /data/postgres
     volumes:
-       - ./postgres-data:/data/postgres
+      - ./postgres-data:/data/postgres
     ports:
       - "5432:5432"
 
@@ -17,7 +17,7 @@ services:
     container_name: cartmanager_migration
     build:
       context: .
-      dockerfile: ./migrate.dockerfile
+      dockerfile: ./database/build/migrate.dockerfile
     restart: on-failure
     environment:
       APP_DATABASE_HOST: db
