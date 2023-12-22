@@ -1,9 +1,12 @@
 const db = require('../../database/db.js');
+const dto = require('../models.js')
 module.exports = {
     getAllCarts: async function() {
         try {
-            const result = await db.query(db.getAllCartsQuery);
-            return { status: 200, data: result.rows };
+            const domainCarts = await db.getAllCarts();
+            // we transform domain objects to DTO (Data transfer objects) - API model!
+            const dtoCarts = domainCarts.map(cart => new dto.Cart(cart.id, cart.userid, cart.name, cart.created_at))
+            return { status: 200, data: dtoCarts };
         } catch (err) {
             console.error(err);
             return { status: 500, message: 'Internal Server Error' };
