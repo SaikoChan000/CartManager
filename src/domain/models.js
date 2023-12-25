@@ -1,28 +1,32 @@
 module.exports = {
     Item: class {
-        constructor(id, name, price, created_at) {
+        constructor(id, name, price) {
             this.id = id;
             this.name = name;
             this.price = price;
-            this.created_at = created_at;
+        }
+    },
+
+    CartItem: class {
+        constructor(item, amount) {
+            this.item = item;
+            this.amount = amount;
         }
     },
 
     Cart: class {
-        constructor(id, userid, name, items, created_at) {
+        constructor(id, userid, name, cartItems) {
             this.id = id;
             this.userid = userid;
             this.name = name;
-            this.items = items;
-            this.created_at = created_at;
+            this.cartItems = cartItems;
         }
     },
 
     User: class {
-        constructor(id, username, created_at) {
+        constructor(id, username) {
             this.id = id;
             this.username = username;
-            this.created_at = created_at;
         }
     }
 };
