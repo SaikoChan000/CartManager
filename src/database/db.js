@@ -22,6 +22,7 @@ const addItemQuery = 'INSERT INTO items(name, price) VALUES($1, $2)';
 const getItemByIdQuery = 'SELECT * FROM items WHERE id = $1';
 const updateItemByIdQuery = 'UPDATE items SET name = $1, price = $2 WHERE id = $3';
 const deleteItemByIdQuery = 'DELETE FROM items WHERE id = $1';
+const editAmountofItemInCartQuery = 'UPDATE item_in_cart SET amount = $1 WHERE cart_id = $2 AND item_id = $3';
 
 const pool = new Pool({
     user: 'postgres',
@@ -50,7 +51,7 @@ module.exports = {
     
     addCart: async function (name, user_id) {
         try {
-            await pool.query(addCartQuery, name, user_id);
+            pool.query(addCartQuery, name, user_id);
             return "ok"
         } catch (error) {
             return error
@@ -59,7 +60,7 @@ module.exports = {
 
     deleteCartsByUserId: async function (user_id) {
         try {
-            await pool.query(deleteCartsByUserIdQuery, user_id);
+            pool.query(deleteCartsByUserIdQuery, user_id);
             return "ok"
         } catch (error) {
             return error
@@ -107,20 +108,16 @@ module.exports = {
 
     deleteCartById: async function (cart_id) {
         try {
-            await pool.query(deleteCartByIdQuery, cart_id);
+            pool.query(deleteCartByIdQuery, cart_id);
         } catch (error) {
             return error
         }
         return "ok"
     },
 
-    //getItemInCart holt mithilfe von Item_id und cart_id den Eintrag aus itemInCart table.
-    //Also muss auch erst auf db model itemInCart gemapped werden und von da aus dann zu CartItem?
-    //Sprich auch mit dem async/await teil wie bei getCartContent?
-
-    getItemInCart: async function (cart_id, item_id) {
+    getAmountofItemInCart: async function (cart_id, item_id) {
         try {
-            const dbResult = await pool.query(getItemInCartQuery, cart_id, item_id);
+            const dbResult = pool.query(getItemInCartQuery, cart_id, item_id);
             const dbModelItemInCart = dbResult.rows.map(row => new ItemInCart(row.id, row.cart_id, row.item_id, row.amount, row.created_at));
             
             const itemPromises = dbModelItemInCart.map(async (dbModelItemInCart) => {
@@ -129,11 +126,7 @@ module.exports = {
                 return new domain.CartItem(domainItem, amount);
             });
             const domainModelCartItems = await Promise.all(itemPromises);
-    
-            const domainCart = await this.getCartById(cart_id);
-    
-            const domainModelCart = new domain.Cart(cart_id, domainCart.user_id, domainCart.name, domainModelCartItems);
-            return domainModelCart;
+            return domainModelCartItems
         } catch (error) {
             return error
         }
@@ -141,7 +134,14 @@ module.exports = {
 
     addItemToCart: async function (cart_id, item_id, amount) {
         try {
-            await pool.query(addItemToCartQuery, cart_id, item_id, amount);
+            const cartItem = this.getAmountofItemInCart(cart_id, item_id);
+            console.log("The found cartItem is:" + cartItem);
+            if (cartItem = []) {
+                pool.query(addItemToCartQuery, cart_id, item_id, amount);
+                return "ok"
+            }
+            const newAmount = cartItem.amount + amount;
+            pool.query(editAmountofItemInCartQuery, newAmount, cart_id, item_id);
             return "ok"
         } catch (error) {
             return error
@@ -150,7 +150,7 @@ module.exports = {
 
     removeItemFromCart: async function (cart_id, item_id) {
         try {
-            await pool.query(removeItemFromCartQuery, cart_id, item_id);
+            pool.query(removeItemFromCartQuery, cart_id, item_id);
             return "ok"
         } catch (error) {
             return error
@@ -159,7 +159,7 @@ module.exports = {
 
     clearCart: async function (cart_id) {
         try {
-            await pool.query(clearCartQuery, cart_id);
+            pool.query(clearCartQuery, cart_id);
             return "ok"
         } catch (error) {
             return error
@@ -180,7 +180,7 @@ module.exports = {
 
     addUser: async function (username) {
         try {
-            await pool.query(addUserQuery, username);
+            pool.query(addUserQuery, username);
             return "ok"
         } catch (error) {
             return error
@@ -199,7 +199,7 @@ module.exports = {
 
     updateUserById: async function (username, user_id) {
         try {
-            await pool.query(updateUserByIdQuery, username, user_id)
+            pool.query(updateUserByIdQuery, username, user_id)
             return "ok"
         } catch (error) {
             return error
@@ -208,7 +208,7 @@ module.exports = {
 
     deleteUserById: async function (user_id) {
         try {
-            await pool.query(deleteUserByIdQuery, user_id)
+            pool.query(deleteUserByIdQuery, user_id)
             return "ok"
         } catch (error) {
             return error
@@ -227,10 +227,9 @@ module.exports = {
         }
     },
 
-    //Code sagt hier, dass "await" an dieser stelle unnötig wäre. Ist das so?
     addItem: async function (name, price) {
         try {
-            await pool.query(addItemQuery, name, price)
+            pool.query(addItemQuery, name, price)
             return "ok"
         } catch (error) {
             return error
@@ -251,7 +250,7 @@ module.exports = {
 
     updateItemById: async function (name, price, item_id) {
         try {
-            await pool.query(updateItemByIdQuery, name, price, item_id)
+            pool.query(updateItemByIdQuery, name, price, item_id)
             return "ok"
         } catch (error) {
             return error
@@ -260,7 +259,7 @@ module.exports = {
 
     deleteItemById: async function (item_id) {
         try {
-            await pool.query(deleteItemByIdQuery, item_id)
+            pool.query(deleteItemByIdQuery, item_id)
             return "ok"
         } catch (error) {
             return error
