@@ -1,6 +1,6 @@
 const { Pool } = require('pg');
 const domain = require('../domain/models.js');
-const { Cart, Item, ItemInCart } = require('./models.js');
+const { Cart, Item, ItemInCart, User } = require('./models.js');
 
 const getAllCartsQuery = 'SELECT * FROM carts';
 const addCartQuery = 'INSERT INTO carts(name, user_id) VALUES($1, $2)';
@@ -79,18 +79,6 @@ module.exports = {
         }
     },
 
-    getItemById: async function (item_id) {
-        try {
-            const dbResult = await pool.query(getItemByIdQuery, item_id);
-            // map raw QueryResult to db model
-            const dbModelItem = dbResult.rows.map(row => new Item(row.id, row.price, row.name, row.created_at))
-            // map db model to domain model
-            return dbModelItem.map(dbItem => new domain.Item(dbItem.id, dbItem.name, dbItem.price))
-        } catch (error) {
-            return error
-        }
-    },
-
     getCartContent: async function (cart_id) {
         try {
             const dbResult = await pool.query(getCartContentQuery, cart_id);
@@ -125,13 +113,157 @@ module.exports = {
         }
         return "ok"
     },
-    
-    getItemInCart: async function () {
+
+    //getItemInCart holt mithilfe von Item_id und cart_id den Eintrag aus itemInCart table.
+    //Also muss auch erst auf db model itemInCart gemapped werden und von da aus dann zu CartItem?
+    //Sprich auch mit dem async/await teil wie bei getCartContent?
+
+    getItemInCart: async function (cart_id, item_id) {
         try {
-            const dbResult = await pool.query(getItemInCartQuery, cart_id);
+            const dbResult = await pool.query(getItemInCartQuery, cart_id, item_id);
+            const dbModelItemInCart = dbResult.rows.map(row => new ItemInCart(row.id, row.cart_id, row.item_id, row.amount, row.created_at));
+            
+            const itemPromises = dbModelItemInCart.map(async (dbModelItemInCart) => {
+                const domainItem = await this.getItemById(dbModelItemInCart.item_id);
+                const amount = dbModelItemInCart.amount;
+                return new domain.CartItem(domainItem, amount);
+            });
+            const domainModelCartItems = await Promise.all(itemPromises);
+    
+            const domainCart = await this.getCartById(cart_id);
+    
+            const domainModelCart = new domain.Cart(cart_id, domainCart.user_id, domainCart.name, domainModelCartItems);
+            return domainModelCart;
         } catch (error) {
             return error
         }
-        return dbResult.rows.map (row => new domain.CartItem(row.id, row.cart))
+    },
+
+    addItemToCart: async function (cart_id, item_id, amount) {
+        try {
+            await pool.query(addItemToCartQuery, cart_id, item_id, amount);
+            return "ok"
+        } catch (error) {
+            return error
+        }
+    },
+
+    removeItemFromCart: async function (cart_id, item_id) {
+        try {
+            await pool.query(removeItemFromCartQuery, cart_id, item_id);
+            return "ok"
+        } catch (error) {
+            return error
+        }
+    },
+
+    clearCart: async function (cart_id) {
+        try {
+            await pool.query(clearCartQuery, cart_id);
+            return "ok"
+        } catch (error) {
+            return error
+        }
+    },
+
+    getAllUsers: async function () {
+        try{
+            const dbResult = await pool.query(getAllUsersQuery);
+            // map raw QueryResult to db model classes
+            const dbModelUser = dbResult.rows.map(row => new User(row.id, row.username, row.created_at))
+            // map db model carts to domain model carts
+            return dbModelUser.map(dbUser => new domain.User(dbUser.id, dbUser.username));
+        } catch (error) {
+            return error
+        }
+    },
+
+    addUser: async function (username) {
+        try {
+            await pool.query(addUserQuery, username);
+            return "ok"
+        } catch (error) {
+            return error
+        }
+    },
+
+    getUserById: async function (user_id) {
+        try {
+            const dbResult = await pool.query(getUserByIdQuery, user_id);
+            const dbModelUser = dbResult.rows.map(row => new User(row.id, row.username, row.created_at));
+            return dbModelUser.map(dbUser => new domain.User(dbUser.id, dbUser.username))
+        } catch (error) {
+            return error
+        }
+    },
+
+    updateUserById: async function (username, user_id) {
+        try {
+            await pool.query(updateUserByIdQuery, username, user_id)
+            return "ok"
+        } catch (error) {
+            return error
+        }
+    },
+
+    deleteUserById: async function (user_id) {
+        try {
+            await pool.query(deleteUserByIdQuery, user_id)
+            return "ok"
+        } catch (error) {
+            return error
+        }
+    },
+
+    getAllItems: async function () {
+        try{
+            const dbResult = await pool.query(getAllItemsQuery);
+            // map raw QueryResult to db model classes
+            const dbModelItem = dbResult.rows.map(row => new Item(row.id, row.price, row.name, row.created_at));
+            // map db model carts to domain model carts
+            return dbModelItem.map(dbItem => new domain.Item(dbItem.id, dbItem.name, dbItem.price));
+        } catch (error) {
+            return error
+        }
+    },
+
+    //Code sagt hier, dass "await" an dieser stelle unnötig wäre. Ist das so?
+    addItem: async function (name, price) {
+        try {
+            await pool.query(addItemQuery, name, price)
+            return "ok"
+        } catch (error) {
+            return error
+        }
+    },
+
+     getItemById: async function (item_id) {
+        try {
+            const dbResult = await pool.query(getItemByIdQuery, item_id);
+            // map raw QueryResult to db model
+            const dbModelItem = dbResult.rows.map(row => new Item(row.id, row.price, row.name, row.created_at))
+            // map db model to domain model
+            return dbModelItem.map(dbItem => new domain.Item(dbItem.id, dbItem.name, dbItem.price))
+        } catch (error) {
+            return error
+        }
+    },
+
+    updateItemById: async function (name, price, item_id) {
+        try {
+            await pool.query(updateItemByIdQuery, name, price, item_id)
+            return "ok"
+        } catch (error) {
+            return error
+        }
+    },
+
+    deleteItemById: async function (item_id) {
+        try {
+            await pool.query(deleteItemByIdQuery, item_id)
+            return "ok"
+        } catch (error) {
+            return error
+        }
     }
 };
