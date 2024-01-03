@@ -26,11 +26,10 @@ module.exports = {
     },
 
     ItemInCart: class {
-        constructor(id, cart_id, item_id, amount, created_at) {
-            this.id = id;
+        constructor(cart_id, item_id, amount) {
             this.cart_id = cart_id;
+            this.item_id = item_id;
             this.amount = amount;
-            this.created_at = created_at;
         }
     }
 

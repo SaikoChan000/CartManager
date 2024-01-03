@@ -51,7 +51,7 @@ module.exports = {
     
     addCart: async function (name, user_id) {
         try {
-            pool.query(addCartQuery, name, user_id);
+            pool.query(addCartQuery, [name, user_id]);
             return "ok"
         } catch (error) {
             return error
@@ -60,7 +60,7 @@ module.exports = {
 
     deleteCartsByUserId: async function (user_id) {
         try {
-            pool.query(deleteCartsByUserIdQuery, user_id);
+            pool.query(deleteCartsByUserIdQuery, [user_id]);
             return "ok"
         } catch (error) {
             return error
@@ -69,12 +69,12 @@ module.exports = {
 
     getCartById: async function (cart_id) {
         try {
-            const dbResult = await pool.query(getCartByIdQuery, cart_id);
+            const dbResult = await pool.query(getCartByIdQuery, [cart_id]);
             // map raw QueryResult to db model
             const dbModelCart = dbResult.rows.map(row => new Cart(row.id, row.user_id, row.name, row.created_at))
             // map db model to domain model
             const domainModelCart = dbModelCart.map(dbCart => new domain.Cart(dbCart.id, dbCart.user_id, dbCart.name));
-            return domainModelCart
+            return domainModelCart[0]
         } catch (error) {
             return error
         }
@@ -82,7 +82,7 @@ module.exports = {
 
     getCartContent: async function (cart_id) {
         try {
-            const dbResult = await pool.query(getCartContentQuery, cart_id);
+            const dbResult = await pool.query(getCartContentQuery, [cart_id]);
             // map raw QueryResult to db model
             const dbModelItemInCart = dbResult.rows.map(row => new ItemInCart(row.id, row.cart_id, row.item_id, row.amount, row.created_at));
     
@@ -95,11 +95,7 @@ module.exports = {
     
             // Await all promises and get resolved items
             const domainModelCartItems = await Promise.all(itemPromises);
-    
-            const domainCart = await this.getCartById(cart_id);
-    
-            const domainModelCart = new domain.Cart(cart_id, domainCart.user_id, domainCart.name, domainModelCartItems);
-            return domainModelCart;
+            return domainModelCartItems;
         } catch (error) {
             return error;
         }
@@ -108,7 +104,7 @@ module.exports = {
 
     deleteCartById: async function (cart_id) {
         try {
-            pool.query(deleteCartByIdQuery, cart_id);
+            pool.query(deleteCartByIdQuery, [cart_id]);
         } catch (error) {
             return error
         }
@@ -117,7 +113,7 @@ module.exports = {
 
     getAmountofItemInCart: async function (cart_id, item_id) {
         try {
-            const dbResult = pool.query(getItemInCartQuery, cart_id, item_id);
+            const dbResult = pool.query(getItemInCartQuery, [cart_id, item_id]);
             const dbModelItemInCart = dbResult.rows.map(row => new ItemInCart(row.id, row.cart_id, row.item_id, row.amount, row.created_at));
             
             const itemPromises = dbModelItemInCart.map(async (dbModelItemInCart) => {
@@ -135,13 +131,12 @@ module.exports = {
     addItemToCart: async function (cart_id, item_id, amount) {
         try {
             const cartItem = this.getAmountofItemInCart(cart_id, item_id);
-            console.log("The found cartItem is:" + cartItem);
             if (cartItem = []) {
-                pool.query(addItemToCartQuery, cart_id, item_id, amount);
+                pool.query(addItemToCartQuery, [cart_id, item_id, amount]);
                 return "ok"
             }
             const newAmount = cartItem.amount + amount;
-            pool.query(editAmountofItemInCartQuery, newAmount, cart_id, item_id);
+            pool.query(editAmountofItemInCartQuery, [newAmount, cart_id, item_id]);
             return "ok"
         } catch (error) {
             return error
@@ -150,7 +145,7 @@ module.exports = {
 
     removeItemFromCart: async function (cart_id, item_id) {
         try {
-            pool.query(removeItemFromCartQuery, cart_id, item_id);
+            pool.query(removeItemFromCartQuery, [cart_id, item_id]);
             return "ok"
         } catch (error) {
             return error
@@ -159,7 +154,7 @@ module.exports = {
 
     clearCart: async function (cart_id) {
         try {
-            pool.query(clearCartQuery, cart_id);
+            pool.query(clearCartQuery, [cart_id]);
             return "ok"
         } catch (error) {
             return error
@@ -180,7 +175,7 @@ module.exports = {
 
     addUser: async function (username) {
         try {
-            pool.query(addUserQuery, username);
+            pool.query(addUserQuery, [username]);
             return "ok"
         } catch (error) {
             return error
@@ -189,17 +184,18 @@ module.exports = {
 
     getUserById: async function (user_id) {
         try {
-            const dbResult = await pool.query(getUserByIdQuery, user_id);
+            const dbResult = await pool.query(getUserByIdQuery, [user_id]);
             const dbModelUser = dbResult.rows.map(row => new User(row.id, row.username, row.created_at));
             return dbModelUser.map(dbUser => new domain.User(dbUser.id, dbUser.username))
         } catch (error) {
+            console.log(error)
             return error
         }
     },
 
     updateUserById: async function (username, user_id) {
         try {
-            pool.query(updateUserByIdQuery, username, user_id)
+            pool.query(updateUserByIdQuery, [username, user_id])
             return "ok"
         } catch (error) {
             return error
@@ -208,7 +204,7 @@ module.exports = {
 
     deleteUserById: async function (user_id) {
         try {
-            pool.query(deleteUserByIdQuery, user_id)
+            pool.query(deleteUserByIdQuery, [user_id])
             return "ok"
         } catch (error) {
             return error
@@ -229,16 +225,16 @@ module.exports = {
 
     addItem: async function (name, price) {
         try {
-            pool.query(addItemQuery, name, price)
+            pool.query(addItemQuery, [name, price])
             return "ok"
         } catch (error) {
             return error
         }
     },
 
-     getItemById: async function (item_id) {
+    getItemById: async function (item_id) {
         try {
-            const dbResult = await pool.query(getItemByIdQuery, item_id);
+            const dbResult = await pool.query(getItemByIdQuery, [item_id]);
             // map raw QueryResult to db model
             const dbModelItem = dbResult.rows.map(row => new Item(row.id, row.price, row.name, row.created_at))
             // map db model to domain model
@@ -250,7 +246,7 @@ module.exports = {
 
     updateItemById: async function (name, price, item_id) {
         try {
-            pool.query(updateItemByIdQuery, name, price, item_id)
+            pool.query(updateItemByIdQuery, [name, price, item_id])
             return "ok"
         } catch (error) {
             return error
@@ -259,7 +255,7 @@ module.exports = {
 
     deleteItemById: async function (item_id) {
         try {
-            pool.query(deleteItemByIdQuery, item_id)
+            pool.query(deleteItemByIdQuery, [item_id])
             return "ok"
         } catch (error) {
             return error

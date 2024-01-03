@@ -1,10 +1,9 @@
-const db = require('../../database/db.js');
+const domain = require('../../domain/domain.js')
 const dto = require('../models.js')
 module.exports = {
     getAllCarts: async function() {
         try {
-            const domainCarts = await db.getAllCarts();
-            // we transform domain objects to DTO (Data transfer objects) - API model!
+            const domainCarts = await domain.getAllCarts();
             const dtoCarts = domainCarts.map(cart => new dto.Cart(cart.id, cart.userid, cart.name, cart.created_at))
             return { status: 200, data: dtoCarts };
         } catch (err) {
@@ -19,11 +18,14 @@ module.exports = {
             return { status: 400, message: 'Invalid ID supplied' };
         }
         try {
-            let userResult = await db.query(db.getUserByIdQuery, [userid]);
-            if (userResult.rows.length === 0) {
+            let userResult = await domain.getUserById(userid);
+            if (userResult instanceof Error) {
                 return { status: 404, message: 'User not found' };
             }
-            await db.query(db.addCartQuery, [name, userid]);
+            let addCartResult = await domain.addCart(name, userid);
+            if (addCartResult instanceof Error) {
+                return { status: 500, message: `Adding Cart failed with name ${name} for user with id ${userid}` };
+            }
             return { status: 200, message: `Added cart with name ${name} for user with id ${userid}` };
         } catch (err) {
             console.error(err);
@@ -37,11 +39,14 @@ module.exports = {
             return { status: 400, message: 'Invalid ID supplied' };
         }
         try {
-            let userResult = await db.query(db.getUserByIdQuery, [userid]);
-            if (userResult.rows.length === 0) {
+            let userResult = await domain.getUserById(userid);
+            if (userResult instanceof Error) {
                 return { status: 404, message: 'User not found' };
             }
-            await db.query(db.deleteCartsByUserIdQuery, [userid]);
+            const deleteCartsResult = await domain.deleteCartsByUserId(userid);
+            if (deleteCartsResult instanceof Error) {
+                return { status: 500, message: `Deleting Carts from user with id ${userid} failed`};
+            }
             return { status: 200, message: `Deleted all carts from user with id ${userid}` };
         } catch (err) {
             console.error(err);
@@ -55,12 +60,17 @@ module.exports = {
             return { status: 400, message: 'Invalid ID supplied' };
         }
         try {
-            let cartResult = await db.query(db.getCartByIdQuery, [cartid]);
-            if (cartResult.rows.length === 0) {
-                return { status: 404, message: 'Cart not found' };
+            let domainCart = await domain.getCartContent(cartid);
+            if (domainCart instanceof Error) {
+                return { status: 500, message: `Failed to get Cart Content for Cart with ID ${cartid}`};
             }
-            const cartContentResult = await db.query(db.getCartContentQuery, [cartid]);
-            return { status: 200, data: cartContentResult.rows };
+            //transform domain cart object into dto ItemInCart array
+            if (Array.isArray(domainCart.cartItems)) {
+                const cartContent = domainCart.cartItems.map(cartItem => new dto.ItemInCart(cartid, cartItem.item.id, cartItem.amount));
+                return { status: 200, data: cartContent };
+            } else {
+                throw new Error('Cart Content is not an array');
+            }
         } catch (err) {
             console.error(err);
             return { status: 500, message: 'Internal Server Error' };
@@ -73,11 +83,14 @@ module.exports = {
             return { status: 400, message: 'Invalid ID supplied' };
         }
         try {
-            let cartResult = await db.query(db.getCartByIdQuery, [cartid]);
-            if (cartResult.rows.length === 0) {
+            let cartResult = awaitdomain.getCartById(cartid);
+            if (cartResult instanceof Error) {
                 return { status: 404, message: 'Cart not found' };
             }
-            await db.query(db.deleteCartByIdQuery, [cartid]);
+            const domainCartDelete = await domain.deleteCartById(cartid);
+            if (domainCartDelete instanceof Error) {
+                return { status: 500, message: `Deleting cart with ID ${cartid} failed`};
+            }
             return { status: 200, message: `Deleted cart with id ${cartid}` };
         } catch (err) {
             console.error(err);
@@ -92,15 +105,11 @@ module.exports = {
             return { status: 400, message: 'Invalid cart or item ID supplied' };
         }
         try {
-            let cartResult = await db.query(db.getCartByIdQuery, [cartId]);
-            if (cartResult.rows.length === 0) {
-                return { status: 404, message: 'Cart not found' };
+            const domainAddItemResult = await domain.addItemToCart(cartId, itemId, amount);
+            if (domainAddItemResult instanceof Error){
+                // wir lesen hier den error raus den wir in der domain.js zurückgeben
+                return { status: 400, message: domainAddItemResult.message};
             }
-            let itemResult = await db.query(db.getItemByIdQuery, [itemId]);
-            if (itemResult.rows.length === 0) {
-                return { status: 404, message: 'Item not found' };
-            }
-            await db.query(db.addItemToCartQuery, [cartId, itemId, amount]);
             return { status: 200, message: `Added ${amount} of item with id ${itemId} into cart with id ${cartId}` };
         } catch (err) {
             console.error(err);
@@ -115,11 +124,14 @@ module.exports = {
             return { status: 400, message: 'Invalid cart or item ID supplied' };
         }
         try {
-            let result = await db.query(db.getItemInCartQuery, [cartId, itemId]);
-            if (result.rows.length === 0) {
+            const domainContentResult = await domain.getItemInCart(cartId, itemId);
+            if (domainContentResult instanceof Error) {
                 return { status: 404, message: 'Entry not found' };
             }
-            await db.query(db.removeItemFromCartQuery, [cartId, itemId]);
+            const domainRemoveResult = await domain.removeItemFromCar(cartId, itemId);
+            if (domainRemoveResult instanceof Error){
+                return { status: 500, message: `Removing Item with ID ${itemId} from cart with ID ${cartId} failed`};
+            }
             return { status: 200, message: `Removed item with id ${itemId} from cart with id ${cartId}` };
         } catch (err) {
             console.error(err);
@@ -133,11 +145,14 @@ module.exports = {
             return { status: 400, message: 'Invalid cart ID supplied' };
         }
         try {
-            let result = await db.query(db.getCartByIdQuery, [cartId]);
-            if (result.rows.length === 0) {
+            let domainCartResult = await domain.getCartById(cartId);
+            if (domainCartResult instanceof Error) {
                 return { status: 404, message: 'Cart not found' };
             }
-            await db.query(db.clearCartQuery, [cartId]);
+            const domainClearResult = await domain.clearCart(cartId);
+            if (domainClearResult instanceof Error){
+                return { status: 500, message: `Clearing cart with ID ${cartId} failed`}
+            }
             return { status: 200, message: `Emptied cart with id ${cartId}` };
         } catch (err) {
             console.error(err);
