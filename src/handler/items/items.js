@@ -1,9 +1,18 @@
 const db = require('../../database/db.js');
+const domain = require('../../domain/domain.js');
+const dto = require('../models.js');
 module.exports = {
     getAllItems: async function () {
         try {
-            const result = await db.query(db.getAllItemsQuery);
-            return { status: 200, data: result.rows };
+            const itemResult = await domain.getAllItems();
+            if (Object.keys(itemResult).length === 0) {
+                return { status: 404, message: 'No items found'};
+            }
+            if (itemResult instanceof Error) {
+                return { status: 400, message: itemResult.message};
+            }
+            let itemsDto = itemResult.map(dbItem => new dto.Item(dbItem.id, dbItem.name, dbItem.price));
+            return { status: 200, data: itemsDto };
         } catch (err) {
             console.error(err);
             return { status: 500, message: 'Internal Server Error' };
@@ -12,8 +21,11 @@ module.exports = {
 
     addItem: async function (name, price) {
         try {
-            await db.query(db.addItemQuery, [name, price]);
-            return { status: 200, message: `Added item named ${name} with price ${price}` };
+            const addItemResult = await domain.addItem(name, price);
+            if (addItemResult instanceof Error) {
+                return { status: 400, message: addItemResult.message};
+            }
+            return { status: 200, message: `Added item named ${name} with a price of ${price}` };
         } catch (err) {
             console.error(err);
             return { status: 500, message: 'Internal Server Error' };
@@ -26,12 +38,18 @@ module.exports = {
             return { status: 400, message: 'Invalid ID supplied' };
         }
         try {
-            let result = await db.query(db.getItemByIdQuery, [itemId]);
-            if (result.rows.length === 0) {
-                return { status: 404, message: 'Item not found' };
+            const itemResult = await domain.getItemById(itemId);
+            if (itemResult instanceof Error) {
+                return { status: 400, message: itemResult.message};
             }
-            await db.query(db.deleteItemByIdQuery, [itemId]);
-            return { status: 200, message: `Deleted item with id ${itemId}.` };
+            if (Object.keys(itemResult).length === 0) {
+                return { status: 404, message: `Can not find item (item ID: ${itemId})`};
+            }
+            const deleteItemResult = await domain.deleteItemById(itemId);
+            if (deleteItemResult instanceof Error) {
+                return { status: 400, message: deleteItemResult.message};
+            }
+            return { status: 200, message: `Deleted item (item ID: ${itemId})` };
         } catch (err) {
             console.error(err);
             return { status: 500, message: 'Internal Server Error' };
@@ -44,11 +62,15 @@ module.exports = {
             return { status: 400, message: 'Invalid ID supplied' };
         }
         try {
-            const result = await db.query(db.getItemByIdQuery, [itemId]);
-            if (result.rows.length === 0) {
-                return { status: 404, message: 'Item not found' };
+            const itemResult = await domain.getItemById(itemId);
+            if (itemResult instanceof Error) {
+                return { status: 400, message: itemResult.message};
             }
-            return { status: 200, data: result.rows };
+            if (Object.keys(itemResult).length === 0) {
+                return { status: 404, message: `Can not find item (item ID: ${itemId})`};
+            }
+            let DtoItemResult = itemResult.map(item => new dto.Item(item.id, item.name, item.price));
+            return { status: 200, data: DtoItemResult };
         } catch (err) {
             console.error(err);
             return { status: 500, message: 'Internal Server Error' };
@@ -61,11 +83,17 @@ module.exports = {
             return { status: 400, message: 'Invalid ID supplied' };
         }
         try {
-            let result = await db.query(db.getItemByIdQuery, [itemId]);
-            if (result.rows.length === 0) {
-                return { status: 404, message: 'Item not found' };
+            const itemResult = await domain.getItemById(itemId);
+            if (Object.keys(itemResult).length === 0) {
+                return { status: 404, message: `Can not find item (item ID: ${itemId})`};
             }
-            await db.query(db.updateItemByIdQuery, [name, price, itemId]);
+            if (itemResult instanceof Error) {
+                return { status: 400, message: itemResult.message};
+            }
+            const updateItemResult = domain.updateItemById(name, price, itemId);
+            if (updateItemResult instanceof Error) {
+                return { status: 400, message: updateItemResult.message};
+            }
             return { status: 200, message: 'Update done' };
         } catch (err) {
             console.error(err);

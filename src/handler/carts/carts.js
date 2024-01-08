@@ -4,6 +4,12 @@ module.exports = {
     getAllCarts: async function() {
         try {
             const domainCarts = await domain.getAllCarts();
+            if (domainCarts instanceof Error) {
+                return { status: 400, message: domainCarts.message};
+            }
+            if (Object.keys(domainCarts).length === 0) {
+                return { status: 404, message: 'No carts found'};
+            }
             const dtoCarts = domainCarts.map(cart => new dto.Cart(cart.id, cart.userid, cart.name, cart.created_at))
             return { status: 200, data: dtoCarts };
         } catch (err) {
@@ -20,13 +26,16 @@ module.exports = {
         try {
             let userResult = await domain.getUserById(userid);
             if (userResult instanceof Error) {
-                return { status: 404, message: 'User not found' };
+                return { status: 400, message: userResult.message};
+            }
+            if (Object.keys(userResult).length === 0) {
+                return { status: 404, message: `Can not find user (user ID: ${userid})`};
             }
             let addCartResult = await domain.addCart(name, userid);
             if (addCartResult instanceof Error) {
-                return { status: 500, message: `Adding Cart failed with name ${name} for user with id ${userid}` };
+                return { status: 400, message: addCartResult.message};
             }
-            return { status: 200, message: `Added cart with name ${name} for user with id ${userid}` };
+            return { status: 200, message: `Added cart with name ${name} for user (user ID: ${userid})` };
         } catch (err) {
             console.error(err);
             return { status: 500, message: 'Internal Server Error' };
@@ -41,13 +50,16 @@ module.exports = {
         try {
             let userResult = await domain.getUserById(userid);
             if (userResult instanceof Error) {
-                return { status: 404, message: 'User not found' };
+                return { status: 400, message: userResult.message};
+            }
+            if (Object.keys(userResult).length === 0) {
+                return { status: 404, message: `Can not find user (user ID: ${userid})`};
             }
             const deleteCartsResult = await domain.deleteCartsByUserId(userid);
             if (deleteCartsResult instanceof Error) {
-                return { status: 500, message: `Deleting Carts from user with id ${userid} failed`};
+                return { status: 400, message: deleteCartsResult.message};
             }
-            return { status: 200, message: `Deleted all carts from user with id ${userid}` };
+            return { status: 200, message: `Deleted all carts from user (user ID: ${userid})` };
         } catch (err) {
             console.error(err);
             return { status: 500, message: 'Internal Server Error' };
@@ -62,9 +74,11 @@ module.exports = {
         try {
             let domainCart = await domain.getCartContent(cartid);
             if (domainCart instanceof Error) {
-                return { status: 500, message: `Failed to get Cart Content for Cart with ID ${cartid}`};
+                return { status: 400, message: domainCart.message};
             }
-            //transform domain cart object into dto ItemInCart array
+            if (Object.keys(domainCart).length === 0) {
+                return { status: 404, message: `Can not find cart (cart ID: ${cartid})`};
+            }
             if (Array.isArray(domainCart.cartItems)) {
                 const cartContent = domainCart.cartItems.map(cartItem => new dto.ItemInCart(cartid, cartItem.item.id, cartItem.amount));
                 return { status: 200, data: cartContent };
@@ -85,13 +99,16 @@ module.exports = {
         try {
             let cartResult = awaitdomain.getCartById(cartid);
             if (cartResult instanceof Error) {
-                return { status: 404, message: 'Cart not found' };
+                return { status: 400, message: cartResult.message};
+            }
+            if (Object.keys(cartResult).length === 0) {
+                return { status: 404, message: `Can not find cart (cart ID: ${cartid})`};
             }
             const domainCartDelete = await domain.deleteCartById(cartid);
             if (domainCartDelete instanceof Error) {
-                return { status: 500, message: `Deleting cart with ID ${cartid} failed`};
+                return { status: 400, message: domainCartDelete.message};
             }
-            return { status: 200, message: `Deleted cart with id ${cartid}` };
+            return { status: 200, message: `Deleted cart (cart ID: ${cartid})` };
         } catch (err) {
             console.error(err);
             return { status: 500, message: 'Internal Server Error' };
@@ -107,10 +124,9 @@ module.exports = {
         try {
             const domainAddItemResult = await domain.addItemToCart(cartId, itemId, amount);
             if (domainAddItemResult instanceof Error){
-                // wir lesen hier den error raus den wir in der domain.js zurückgeben
                 return { status: 400, message: domainAddItemResult.message};
             }
-            return { status: 200, message: `Added ${amount} of item with id ${itemId} into cart with id ${cartId}` };
+            return { status: 200, message: `Added ${amount} of item into cart (item ID: ${itemId}, cart ID: ${cartId})` };
         } catch (err) {
             console.error(err);
             return { status: 500, message: 'Internal Server Error' };
@@ -126,13 +142,16 @@ module.exports = {
         try {
             const domainContentResult = await domain.getItemInCart(cartId, itemId);
             if (domainContentResult instanceof Error) {
-                return { status: 404, message: 'Entry not found' };
+                return { status: 400, message: domainContentResult.message};
             }
-            const domainRemoveResult = await domain.removeItemFromCar(cartId, itemId);
+            if (Object.keys(domainContentResult).length === 0) {
+                return { status: 404, message: `No entry for item in cart found (item ID: ${itemId}, cart ID: ${cartId})`};
+            }
+            const domainRemoveResult = await domain.removeItemFromCart(cartId, itemId);
             if (domainRemoveResult instanceof Error){
-                return { status: 500, message: `Removing Item with ID ${itemId} from cart with ID ${cartId} failed`};
+                return { status: 400, message: domainRemoveResult.message};
             }
-            return { status: 200, message: `Removed item with id ${itemId} from cart with id ${cartId}` };
+            return { status: 200, message: `Removed item from cart (item ID: ${itemId}, cart ID: ${cartId})` };
         } catch (err) {
             console.error(err);
             return { status: 500, message: 'Internal Server Error' };
@@ -147,13 +166,16 @@ module.exports = {
         try {
             let domainCartResult = await domain.getCartById(cartId);
             if (domainCartResult instanceof Error) {
-                return { status: 404, message: 'Cart not found' };
+                return { status: 400, message: domainCartResult.message};
+            }
+            if (Object.keys(domainCartResult). length === 0) {
+                return { status: 404, message: `Can not find cart (cart ID: ${cartId})`};
             }
             const domainClearResult = await domain.clearCart(cartId);
             if (domainClearResult instanceof Error){
-                return { status: 500, message: `Clearing cart with ID ${cartId} failed`}
+                return { status: 400, message: domainClearResult.message};
             }
-            return { status: 200, message: `Emptied cart with id ${cartId}` };
+            return { status: 200, message: `Emptied cart (cart ID: ${cartId})` };
         } catch (err) {
             console.error(err);
             return { status: 500, message: 'Internal Server Error' };
