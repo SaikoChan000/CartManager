@@ -13,18 +13,20 @@ delete:
         format: int64
   responses:
     '200':
-      description: successful operation
+      description: Deleted cart (cart ID)
     '400':
       description: Invalid ID supplied
+    '409':
+      description: DB operation failed
     '404':
-      description: Cart not found
+      description: Can not find cart (cart ID)
  
   # This API has no security
   security: []
 
 get:
   summary: Get a cart by cartID with all its content
-  operationId: showCartContent
+  operationId: getCartById
   tags:
     - shopping
   parameters:
@@ -45,8 +47,10 @@ get:
               $ref: '../../schemas/_index.yml#/CartContentResponse'
     '400':
       description: Invalid ID supplied
+    '409':
+      description: DB operation failed
     '404':
-      description: Cart not found
+      description: Can not find cart (cart ID)
  
   # This API has no security
   security: []
@@ -75,8 +79,10 @@ post:
       description: successful operation
     '400':
       description: Invalid ID supplied
+    '409':
+      description: DB operation failed
     '404':
-      description: Cart not found
+      description: Can not find DB entry
  
   # This API has no security
   security: []

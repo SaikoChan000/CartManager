@@ -1,6 +1,6 @@
 get:
-  summary: Show all carts
-  operationId: showAllCarts
+  summary: Get all carts
+  operationId: getAllCarts
   tags:
     - cart
   responses:
@@ -12,6 +12,8 @@ get:
             type: array
             items: 
               $ref: '../../schemas/_index.yml#/CartResponse'
+    '409':
+      description: DB operation failed
     '404':
       description: No carts found
  
@@ -20,7 +22,7 @@ get:
 
 post:
   summary: Add new cart
-  operationId: addNewCart
+  operationId: addCart
   tags:
     - cart
   requestBody:
@@ -31,9 +33,13 @@ post:
           $ref: '../../schemas/_index.yml#/CartPostRequest'
   responses:
     '201':
-      description: created cart
+      description: Added cart with name (name) for user (user ID)
+    '400':
+      description: Invalid ID supplied
+    '409':
+      description: DB operation failed
     '404':
-      description: User not found
+      description: Can not find user (user ID)
  
   # This API has no security
   security: []
