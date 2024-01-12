@@ -80,8 +80,6 @@ delete:
       description: Invalid ID supplied
     '404':
       description: Item not found
-    '409':
-      description: DB operation failed
  
   # This API has no security
   security: []

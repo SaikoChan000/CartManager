@@ -8,9 +8,6 @@ module.exports = {
             if (Object.keys(itemResult).length === 0) {
                 return { status: 404, message: 'No items found'};
             }
-            if (itemResult instanceof Error) {
-                return { status: 409, message: itemResult.message};
-            }
             let itemsDto = itemResult.map(dbItem => new dto.Item(dbItem.id, dbItem.name, dbItem.price));
             return { status: 200, data: itemsDto };
         } catch (err) {
@@ -21,10 +18,7 @@ module.exports = {
 
     addItem: async function (name, price) {
         try {
-            const addItemResult = await domain.addItem(name, price);
-            if (addItemResult instanceof Error) {
-                return { status: 409, message: addItemResult.message};
-            }
+            await domain.addItem(name, price);
             return { status: 201, message: `Added item ${name} with a price of ${price}` };
         } catch (err) {
             console.error(err);
@@ -39,16 +33,10 @@ module.exports = {
         }
         try {
             const itemResult = await domain.getItemById(itemId);
-            if (itemResult instanceof Error) {
-                return { status: 409, message: itemResult.message};
-            }
             if (Object.keys(itemResult).length === 0) {
                 return { status: 404, message: `Can not find item (item ID: ${itemId})`};
             }
-            const deleteItemResult = await domain.deleteItemById(itemId);
-            if (deleteItemResult instanceof Error) {
-                return { status: 409, message: deleteItemResult.message};
-            }
+            await domain.deleteItemById(itemId);
             return { status: 200, message: `Deleted item (item ID: ${itemId})` };
         } catch (err) {
             console.error(err);
@@ -63,9 +51,6 @@ module.exports = {
         }
         try {
             const itemResult = await domain.getItemById(itemId);
-            if (itemResult instanceof Error) {
-                return { status: 409, message: itemResult.message};
-            }
             if (Object.keys(itemResult).length === 0) {
                 return { status: 404, message: `Can not find item (item ID: ${itemId})`};
             }
@@ -87,13 +72,7 @@ module.exports = {
             if (Object.keys(itemResult).length === 0) {
                 return { status: 404, message: `Can not find item (item ID: ${itemId})`};
             }
-            if (itemResult instanceof Error) {
-                return { status: 409, message: itemResult.message};
-            }
             const updateItemResult = domain.updateItemById(name, price, itemId);
-            if (updateItemResult instanceof Error) {
-                return { status: 409, message: updateItemResult.message};
-            }
             return { status: 200, message: 'Update done' };
         } catch (err) {
             console.error(err);

@@ -5,9 +5,6 @@ module.exports = {
     getAllUsers: async function () {
         try {
             const usersArr = await domain.getAllUsers();
-            if (usersArr instanceof Error) {
-                return { status: 409, message: usersArr.message};
-            }
             if (Object.keys(usersArr).length === 0) {
                 return { status: 404, message: 'No users found'};
             }
@@ -21,10 +18,10 @@ module.exports = {
 
     addUser: async function (username) {
         try {
-            const addUserResult = domain.addUser(username);
-            if (addUserResult instanceof Error) {
-                return { status: 409, message: addUserResult.message};
+            if (!username) {
+                return { status: 400, message: 'Bad Request' };
             }
+            domain.addUser(username);
             return { status: 201, message: `Added user ${username}` };
         } catch (err) {
             console.error(err);
@@ -39,9 +36,6 @@ module.exports = {
         }
         try {
             const userResult = await domain.getUserById(userId);
-            if (userResult instanceof Error) {
-                return { status: 409, message: userResult.message };
-            }
             const userDto = userResult.map(user => new dto.User(user.id, user.username));
             if (Object.keys(userDto).length === 0) {
                 return { status: 404, message: `Can not find user (user ID: ${userId})`};
@@ -64,10 +58,7 @@ module.exports = {
             if (Object.keys(userResult).length === 0) {
                 return { status: 404, message: `Can not find user (user ID: ${userId})` };
             }
-            const updateUserResult = await domain.updateUserById(username, userId);
-            if (updateUserResult instanceof Error) {
-                return { status: 409, message: updateUserResult.message};
-            }
+            await domain.updateUserById(username, userId);
             return { status: 200, message: 'Update done' };
         } catch (err) {
             console.error(err);
@@ -86,10 +77,7 @@ module.exports = {
             if (Object.keys(userResult).length === 0) {
                 return { status: 404, message: `Can not find user (user ID: ${userId})` };
             }
-            const deleteUserResult = await domain.deleteUserById(userId);
-            if (deleteUserResult instanceof Error) {
-                return { status: 409, message: deleteUserResult.message};
-            }
+            await domain.deleteUserById(userId);
             return { status: 200, message: `Deleted user (user ID: ${userId})` };
         } catch (err) {
             console.error(err);

@@ -12,8 +12,6 @@ get:
             type: array
             items: 
               $ref: '../../schemas/_index.yml#/CartResponse'
-    '409':
-      description: DB operation failed
     '404':
       description: No carts found
  
@@ -36,8 +34,6 @@ post:
       description: Added cart with name (name) for user (user ID)
     '400':
       description: Invalid ID supplied
-    '409':
-      description: DB operation failed
     '404':
       description: Can not find user (user ID)
  

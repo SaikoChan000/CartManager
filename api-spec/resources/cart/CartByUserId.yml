@@ -16,8 +16,6 @@ delete:
       description: Deleted all carts from user (userID)
     '400':
       description: Invalid ID supplied
-    '409':
-      description: DB operation failed
     '404':
       description: Can not find user (user ID)
  
